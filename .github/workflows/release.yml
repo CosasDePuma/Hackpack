@@ -1,40 +1,40 @@
 ---
-name: 'Compile, bundle and release the tools'
+name: "Compile, bundle and release the tools"
 
 on:
-  push:         { branches: [ 'main' ] }
-  pull_request: { branches: [ 'main' ] }
+  push:         { branches: ["main"] }
+  pull_request: { branches: ["main"] }
 
 jobs:
   csharp:
-    runs-on: 'windows-2019'
+    runs-on: "windows-2019"
     strategy:
       matrix:
         project:
-          - 'DCSyncer'
-          - 'Rubeus'
-          - 'Seatbelt'
-          - 'SharPersist'
-          - 'SharpUp'
+          - "DCSyncer"
+          - "Rubeus"
+          - "Seatbelt"
+          - "SharPersist"
+          - "SharpUp"
     steps:
-      - name: 'Checkout code'
-        uses: 'actions/checkout@v4'
+      - name: "Checkout code"
+        uses: "actions/checkout@v4"
         with:
           fetch-depth: 1
-          submodules: 'recursive'
+          submodules: "recursive"
 
-      - name: 'Setup MSBuild'
-        uses: 'microsoft/setup-msbuild@v2'
+      - name: "Setup MSBuild"
+        uses: "microsoft/setup-msbuild@v2"
 
-      - name: 'Setup NuGeet'
-        uses: 'NuGet/setup-nuget@v2'
+      - name: "Setup NuGeet"
+        uses: "NuGet/setup-nuget@v2"
 
-      - name: 'Restore the solution'
-        run: 'nuget restore ${{ matrix.project }}.sln'
-        working-directory: 'windows/${{ matrix.project }}'
+      - name: "Restore the solution"
+        run: "nuget restore ${{ matrix.project }}.sln"
+        working-directory: "windows/${{ matrix.project }}"
 
         # yamllint disable rule:indentation rule:line-length
-      - name: 'Pre-hooks'
+      - name: "Pre-hooks"
         run: |
           # SharPersist
           if ('${{ matrix.project }}' -eq 'SharPersist') {
@@ -45,72 +45,72 @@ jobs:
             nuget install Costura.Fody -Version 3.3.3 -Source 'https://api.nuget.org/v3/index.json' -OutputDirectory '.\packages'
             nuget install TaskScheduler -Version 2.8.11 -Source 'https://api.nuget.org/v3/index.json' -OutputDirectory '.\packages'
           }
-        working-directory: 'windows/${{ matrix.project }}'
-        if: 'success() || failure()'
+        working-directory: "windows/${{ matrix.project }}"
+        if: "success() || failure()"
         # yamllint enable rule:indentation rule:line-length
 
-      - name: 'Build the solution'
+      - name: "Build the solution"
         run: |
           msbuild /m /t:Build /p:Configuration=Release /p:Platform="Any CPU"
           if (-not $?) { msbuild /m /t:Build /p:Configuration=Release /p:Platform="x64" }
           Get-ChildItem -Path . -Recurse -Filter *.exe | Move-Item -Destination . -Force
-        working-directory: 'windows/${{ matrix.project }}'
+        working-directory: "windows/${{ matrix.project }}"
 
-      - name: 'Archive the artifacts'
-        uses: 'actions/upload-artifact@v4'
+      - name: "Archive the artifacts"
+        uses: "actions/upload-artifact@v4"
         with:
-          name: '${{ matrix.project }}'
-          path: 'windows/${{ matrix.project }}/*.exe'
-          if-no-files-found: 'error'
+          name: "${{ matrix.project }}"
+          path: "windows/${{ matrix.project }}/*.exe"
+          if-no-files-found: "error"
 
   powershell:
-    runs-on: 'ubuntu-latest'
+    runs-on: "ubuntu-latest"
     strategy:
       matrix:
         project:
-          - 'Get-ServiceACL'
-          - 'MailSniper'
-          - 'Powercat'
-          - 'PowerLurk'
-          - 'PowerSharpPack'
-          - 'PowerSploit'
+          - "Get-ServiceACL"
+          - "MailSniper"
+          - "Powercat"
+          - "PowerLurk"
+          - "PowerSharpPack"
+          - "PowerSploit"
     steps:
-      - name: 'Checkout code'
-        uses: 'actions/checkout@v4'
+      - name: "Checkout code"
+        uses: "actions/checkout@v4"
         with:
           fetch-depth: 1
-          submodules: 'recursive'
+          submodules: "recursive"
 
-      - name: 'Copy all the PWSH scripts'
+      - name: "Copy all the PWSH scripts"
         run: |
           mkdir -p /tmp/${{ matrix.project }}
           find . -type f -name '*.ps1' -exec cp {} /tmp/${{ matrix.project }}/ \;
-        working-directory: 'windows/${{ matrix.project }}'
+        working-directory: "windows/${{ matrix.project }}"
 
-      - name: 'Archive the artifacts'
-        uses: 'actions/upload-artifact@v4'
+      - name: "Archive the artifacts"
+        uses: "actions/upload-artifact@v4"
         with:
-          name: '${{ matrix.project }}'
-          path: '/tmp/${{ matrix.project }}/'
-          if-no-files-found: 'error'
+          name: "${{ matrix.project }}"
+          path: "/tmp/${{ matrix.project }}/"
+          if-no-files-found: "error"
 
   windows-bundle:
-    runs-on: 'ubuntu-latest'
-    needs: [ 'csharp', 'powershell' ]
+    runs-on: "ubuntu-latest"
+    needs: ["csharp", "powershell"]
     steps:
-      - name: 'Download csharp artifacts'
-        uses: 'actions/download-artifact@v4'
+      - name: "Download csharp artifacts"
+        uses: "actions/download-artifact@v4"
         with:
-          path: '/tmp/bundle/'
-          pattern: '*'
+          path: "/tmp/bundle/"
+          pattern: "*"
           merge-multiple: false
 
-      - name: 'Remove the temporary artifacts'
-        uses: 'geekyeggo/delete-artifact@v5'
+      - name: "Remove the temporary artifacts"
+        uses: "geekyeggo/delete-artifact@v5"
         with:
-          name: '*'
+          name: "*"
 
-      - name: 'Extra steps'
+      - name: "Extra steps"
         run: |
           # Rubeus
           echo 'Copying the Rubeus powershell version to Rubeus directory'
@@ -127,13 +127,55 @@ jobs:
           # SharpUp
           echo 'Copying the SharpUp powershell version to SharpUp directory'
           cp ./PowerSharpPack/Invoke-SharpUp.ps1 ./SharpUp/
-        working-directory: '/tmp/bundle/'
+        working-directory: "/tmp/bundle/"
 
-      - name: 'Upload the final artifact'
-        uses: 'actions/upload-artifact@v4'
+      - name: "Upload the final artifact"
+        uses: "actions/upload-artifact@v4"
         with:
-          if-no-files-found: 'error'
-          name: 'hackpack-windows.zip'
-          path: '/tmp/bundle/'
+          if-no-files-found: "error"
+          name: "hackpack-windows.zip"
+          path: "/tmp/bundle/"
           compression-level: 9
+
+  release:
+    runs-on: "ubuntu-latest"
+    needs: ["windows-bundle"]
+    permissions:
+      contents: "write"
+    steps:
+      - name: "Checkout code"
+        uses: "actions/checkout@v4"
+        with:
+          fetch-depth: 1
+
+      - name: "Download the Windows artifact"
+        uses: "actions/download-artifact@v4"
+        with:
+          name: "hackpack-windows.zip"
+          path: "/tmp/windows"
+
+      - name: "Zip the artifacts"
+        run: "/usr/bin/zip -r /tmp/hackpack-windows.zip ."
+        working-directory: "/tmp/windows"
+
+      - name: "Delete older releases"
+        uses: "jay2610/delete-older-releases@1.4.0"
+        with:
+          keep_latest: 0
+          delete_tags: true
+        env:
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+
+      - name: "Release the artifacts"
+        uses: "softprops/action-gh-release@v2"
+        with:
+          name: "🎒 Hackpack!"
+          tag_name: "latest"
+          body_path: "README.md"
+          make_latest: true
+          files: |-
+            /tmp/hackpack-windows.zip
+          draft: false
+          prerelease: false
+          token: "${{ secrets.GITHUB_TOKEN }}"
 ...

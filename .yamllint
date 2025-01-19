@@ -1,4 +1,10 @@
 ---
+extends: "default"
+yaml-files:
+  - ".yamllint"
+  - "*.yml"
+  - "*.yaml"
+ignore: []
 rules:
   anchors:
     forbid-undeclared-aliases: true
@@ -12,8 +18,8 @@ rules:
     max-spaces-inside-empty: 0
   brackets:
     forbid: false
-    min-spaces-inside: 1
-    max-spaces-inside: 1
+    min-spaces-inside: 0
+    max-spaces-inside: 0
     min-spaces-inside-empty: 0
     max-spaces-inside-empty: 0
   colons:
@@ -48,25 +54,25 @@ rules:
   hyphens:
     max-spaces-after: 1
   indentation:
-    spaces: 'consistent'
+    spaces: "consistent"
     indent-sequences: true
     check-multi-line-strings: true
   key-duplicates:
     forbid-duplicated-merge-keys: false
-  key-ordering: 'disable'
+  key-ordering: "disable"
   line-length:
-    level: 'warning'
-    max: 120
+    level: "warning"
+    max: 130
     allow-non-breakable-words: true
     allow-non-breakable-inline-mappings: true
   new-line-at-end-of-file: {}
   new-lines:
-    type: 'platform'
+    type: "platform"
   octal-values:
     forbid-implicit-octal: true
     forbid-explicit-octal: true
   quoted-strings:
-    quote-type: 'single'
+    quote-type: "double"
     required: true
     extra-required: []
     extra-allowed: []
@@ -74,6 +80,6 @@ rules:
     check-keys: false
   trailing-spaces: {}
   truthy:
-    allowed-values: [ 'true', 'false' ]
+    allowed-values: ["true", "false"]
     check-keys: false
 ...
