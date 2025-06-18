@@ -6,7 +6,7 @@ info:
 workflows:
   - template: templates/ssh/detect.yaml
     subtemplates:
-      - template: templates/ssh/terrapin.yaml
+      - template: templates/ssh/cve-2023-48795.yaml
       - template: templates/ssh/weak-kex.yaml
       - template: templates/ssh/weak-mac.yaml
 ...

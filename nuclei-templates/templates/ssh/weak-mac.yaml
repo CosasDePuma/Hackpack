@@ -22,8 +22,9 @@ info:
     verified: true
     max-request: 1
     shodan-query:
+      - product:"dropbear"
       - product:"openssh"
-  tags: crypto,passive,ssh,openssh
+  tags: crypto,passive,ssh,dropbear,openssh
 javascript:
   - pre-condition: isPortOpen(Host,Port);
     code: |-
