@@ -1,0 +1,12 @@
+---
+id: ssh-workflow
+info:
+  name: SSH Workflow
+  author: cosasdepuma
+workflows:
+  - template: templates/ssh/detect.yaml
+    subtemplates:
+      - template: templates/ssh/terrapin.yaml
+      - template: templates/ssh/weak-kex.yaml
+      - template: templates/ssh/weak-mac.yaml
+...

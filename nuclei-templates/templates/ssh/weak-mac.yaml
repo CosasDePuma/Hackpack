@@ -1,0 +1,48 @@
+---
+id: ssh-weak-mac
+info:
+  name: Weak MAC algorithms in SSH
+  author: cosasdepuma
+  severity: low
+  description: |-
+    The MAC algorithm in SSH is fundamental to maintaining the security of the protocol. It is responsible for verifying that the transmitted data has not been modified during transit and that it comes from the legitimate source, providing protection against data tampering attacks.
+    There are four main reasons why a message authentication code algorithm can be considered weak: A known weak hash function (such as MD5 or SHA1) is used, the digest length is too small (less than 128 bits), the tag size is too small (less than 128 bits) or Encrypt-then-MAC (EtM) mode is not used.
+  remediation: |-
+    It is recommended to configure the SSH server to offer only the following MAC algorithms: hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com,umac-128-etm@openssh.com
+  reference:
+    - https://datatracker.ietf.org/doc/html/rfc2104/
+    - https://datatracker.ietf.org/doc/html/rfc6668/
+    - https://capec.mitre.org/data/definitions/217.html
+    - https://attack.mitre.org/techniques/T1557/
+  classification:
+    cvss-metrics: CVSS:4.0/AV:N/AC:H/AT:N/PR:N/UI:P/VC:L/VI:N/VA:N/SC:N/SI:N/SA:N
+    cvss-score: 2.3
+    cwe-id: CWE-327
+  metadata:
+    verified: true
+    max-request: 1
+    shodan-query:
+      - product:"openssh"
+  tags: crypto,passive,ssh,openssh
+javascript:
+  - pre-condition: isPortOpen(Host,Port);
+    code: |-
+      const m = require("nuclei/ssh");
+      const c = m.SSHClient();
+      const response = c.ConnectSSHInfoMode(Host, Port);
+      function Check()
+      {
+      const etm = new RegExp(/-etm@/);
+      const weak = new RegExp(/-(64|96|md5|sha1)-/);
+      const vuln = response.ServerKex.MACsClientServer.filter(algo => !etm.test(algo) || weak.test(algo));
+      if(vuln.length > 0) return vuln.join(",");
+      }
+      Export(Check())
+    args:
+      Host: "{{Host}}"
+      Port: 22
+    extractors:
+      - type: dsl
+        dsl:
+          - response
+...

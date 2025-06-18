@@ -1,0 +1,47 @@
+---
+id: ssh-weak-kex
+info:
+  name: Weak key exchange algorithms in SSH
+  author: cosasdepuma
+  severity: low
+  description: |-
+    The SSH key exchange algorithm is fundamental to maintaining the security of the protocol. It is what allows two previously unknown parties to generate a shared key in plain sight, and for that secret to remain private to the client and server.
+    There are three main reasons why an exchange algorithm can be considered weak: the algorithm uses SHA1, the algorithm uses 1024-bit modulus RSA keys or it is suspected that the elliptic curve in use has been breached by the NSA (National Security Agency of the USA).
+  remediation: |-
+    It is recommended to configure the SSH server to offer only the following KEX algorithms: curve25519-sha256@libssh.org,diffie-hellman-group16-sha512,diffie-hellman-group18-sha512
+  reference:
+    - https://datatracker.ietf.org/doc/html/rfc8308/
+    - https://datatracker.ietf.org/doc/html/rfc9142
+    - https://capec.mitre.org/data/definitions/217.html
+    - https://attack.mitre.org/techniques/T1557/
+  classification:
+    cvss-metrics: CVSS:4.0/AV:N/AC:H/AT:N/PR:N/UI:P/VC:L/VI:N/VA:N/SC:N/SI:N/SA:N
+    cvss-score: 2.3
+    cwe-id: CWE-327
+  metadata:
+    verified: true
+    max-request: 1
+    shodan-query:
+      - product:"openssh"
+  tags: crypto,passive,ssh,openssh
+javascript:
+  - pre-condition: isPortOpen(Host,Port);
+    code: |-
+      const m = require("nuclei/ssh");
+      const c = m.SSHClient();
+      const response = c.ConnectSSHInfoMode(Host, Port);
+      function Check()
+      {
+      const regex = new RegExp(/^(ecdh-sha2-nistp|rsa1024-)|-group(-exchange|14?)-|-sha1(-|$)/);
+      const vuln = response.ServerKex.KexAlgos.filter(algo => regex.test(algo));
+      if(vuln.length > 0) return vuln.join(",");
+      }
+      Export(Check())
+    args:
+      Host: "{{Host}}"
+      Port: 22
+    extractors:
+      - type: dsl
+        dsl:
+          - response
+...
