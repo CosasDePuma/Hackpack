@@ -2,7 +2,7 @@
 id: ssh-detect
 info:
   name: SSH Service
-  author: r3dg33k,daffainfo,iamthefrogy
+  author: cosasdepuma
   severity: info
   description: SSH service was detected.
   reference:
@@ -18,7 +18,7 @@ info:
     shodan-query:
       - product:"dropbear"
       - product:"openssh"
-  tags: detect,ssh,dropbear,openssh
+  tags: cosasdepuma,detect,ssh,dropbear,openssh
 tcp:
   - host:
       - "{{Hostname}}"
@@ -26,7 +26,7 @@ tcp:
     matchers:
       - type: regex
         regex: &banner
-          - (?i)SSH-2.0-[^\r]+
+          - (?i)SSH-[0-9.]+-[^\r]+
     extractors:
       - type: regex
         regex: *banner

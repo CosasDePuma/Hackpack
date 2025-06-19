@@ -15,8 +15,8 @@ info:
     - https://capec.mitre.org/data/definitions/217.html
     - https://attack.mitre.org/techniques/T1557/
   classification:
-    cvss-metrics: CVSS:4.0/AV:N/AC:H/AT:N/PR:N/UI:P/VC:L/VI:N/VA:N/SC:N/SI:N/SA:N
-    cvss-score: 2.3
+    cvss-metrics: CVSS:4.0/AV:N/AC:H/AT:N/PR:N/UI:P/VC:N/VI:L/VA:N/SC:N/SI:N/SA:N/E:U
+    cvss-score: 0.9
     cwe-id: CWE-327
   metadata:
     verified: true
@@ -24,20 +24,16 @@ info:
     shodan-query:
       - product:"dropbear"
       - product:"openssh"
-  tags: crypto,passive,ssh,dropbear,openssh
+  tags: cosasdepuma,crypto,passive,ssh,dropbear,openssh
 javascript:
   - pre-condition: isPortOpen(Host,Port);
     code: |-
       const m = require("nuclei/ssh");
       const c = m.SSHClient();
       const response = c.ConnectSSHInfoMode(Host, Port);
-      function Check()
-      {
-      const regex = new RegExp(/^(ecdh-sha2-nistp|rsa1024-)|-group(-exchange|14?)-|-sha1(-|$)/);
-      const vuln = response.ServerKex.KexAlgos.filter(algo => regex.test(algo));
-      if(vuln.length > 0) return vuln.join(",");
-      }
-      Export(Check())
+      const weak = new RegExp(/^(ecdh-sha2-nistp|rsa1024-)|-group(-exchange|14?)-|-sha1(-|$)/);
+      const vuln = response.ServerKex.KexAlgos.filter(algo => weak.test(algo));
+      if(vuln.length > 0) Export(vuln.join(","));
     args:
       Host: "{{Host}}"
       Port: 22

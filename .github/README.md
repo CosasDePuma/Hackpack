@@ -30,6 +30,7 @@
 | [SharPersist](https://github.com/mandiant/SharPersist)             | Toolkit for Windows persistence.                                                                                |
 | [SharpUp](https://github.com/GhostPack/SharpUp)                    | [PowerUp](https://github.com/PowerShellMafia/PowerSploit/blob/dev/Privesc/PowerUp.ps1)-like tool written in C#. |
 
+<br/>
 
 ## ⚛️ Nuclei Templates
 
@@ -37,9 +38,12 @@
 | ---- | ----- | --- | ----------- |
 | 🔀 | SSH | [ssh-workflow](../nuclei-templates/workflows/ssh.yaml) | SSH workflow. |
 | 📄 | SSH | [ssh-detect](../nuclei-templates/templates/ssh/detect.yaml) | Software detection via Banner Grabbing. |
+| 📄 | SSH | [ssh-auth-password](../nuclei-templates/templates/ssh/auth-password.yaml) | Password-based authentication enabled. |
 | 📄 | SSH | [ssh-weak-kex](../nuclei-templates/templates/ssh/weak-kex.yaml) | Weak key exchange algorithms offered. |
 | 📄 | SSH | [ssh-weak-mac](../nuclei-templates/templates/ssh/weak-mac.yaml) | Weak message authentication code algorithms offered. |
-| 📄 | SSH | [cve-2023-48795](../nuclei-templates/templates/ssh/cve-2023-48795.yaml) | Terrapin Attack checker. |
+| 📄 | SSH | [cve-2016-6210](../nuclei-templates/templates/ssh/cve-2016-6210.yaml) | User enumeration in OpenSSH < 7.3. |
+| 📄 | SSH | [cve-2018-15473](../nuclei-templates/templates/ssh/cve-2018-15473.yaml) | User enumeration in OpenSSH < 7.7. |
+| 📄 | SSH | [cve-2023-48795](../nuclei-templates/templates/ssh/cve-2023-48795.yaml) | Terrapin Attack. |
 
 <hr/>
 </div>
