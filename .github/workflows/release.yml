@@ -171,7 +171,7 @@ jobs:
         with:
           name: "🎒 Hackpack!"
           tag_name: "latest"
-          body_path: "README.md"
+          body_path: ".github/README.md"
           make_latest: true
           files: |-
             /tmp/hackpack-windows.zip
