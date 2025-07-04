@@ -11,6 +11,7 @@ jobs:
     strategy:
       matrix:
         project:
+          - "Certify"
           - "DCSyncer"
           - "Rubeus"
           - "Seatbelt"
@@ -112,6 +113,10 @@ jobs:
 
       - name: "Extra steps"
         run: |
+          # Certify
+          echo 'Copying the Certify executable to the bundle directory'
+          cp ./PowerSharpPack/Invoke-Certify.ps1 ./Certify/
+
           # Rubeus
           echo 'Copying the Rubeus powershell version to Rubeus directory'
           cp ./PowerSharpPack/Invoke-Rubeus.ps1 ./Rubeus/
