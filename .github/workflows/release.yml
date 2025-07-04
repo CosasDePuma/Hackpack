@@ -1,72 +1,101 @@
 ---
-name: "Compile, bundle and release the tools"
+name: "🎒 Build and release Hackpack"
 
 on:
   push:         { branches: ["main"] }
   pull_request: { branches: ["main"] }
+  schedule:     [{ cron: "0 0 1 * *" }]
 
 jobs:
+
+  # -------------------------------------------------
+  #       CSharp (C#) Build
+  # -------------------------------------------------
+
   csharp:
-    runs-on: "windows-2019"
+    name: "🔨 Compile ${{ matrix.project }} (${{ matrix.platform }})"
+    runs-on: "windows-2022"
     strategy:
+      fail-fast: false
       matrix:
-        project:
-          - "Certify"
-          - "DCSyncer"
-          - "Rubeus"
-          - "Seatbelt"
-          - "SharPersist"
-          - "SharpUp"
+        include:
+          - { project: "Certify",     platform: "Any CPU" }
+          - { project: "Rubeus",      platform: "Any CPU" }
+          - { project: "Seatbelt",    platform: "Any CPU" }
+          - { project: "SharPersist", platform: "Any CPU" }
+          - { project: "SharpUp",     platform: "Any CPU" }
+
     steps:
-      - name: "Checkout code"
+      - name: "📥 Checkout code"
         uses: "actions/checkout@v4"
         with:
           fetch-depth: 1
           submodules: "recursive"
 
-      - name: "Setup MSBuild"
+      - name: "🔧 Setup MSBuild"
         uses: "microsoft/setup-msbuild@v2"
-
-      - name: "Setup NuGeet"
+      
+      - name: "📦 Setup NuGet"
         uses: "NuGet/setup-nuget@v2"
 
-      - name: "Restore the solution"
+      - name: "🛠️ Install .NET 4.0 Framework"
+        run: |-
+          Invoke-WebRequest -Uri "https://www.nuget.org/api/v2/package/Microsoft.NETFramework.ReferenceAssemblies.net40/1.0.3" -OutFile "${env:temp}\net4.zip"
+          Expand-Archive -Force -LiteralPath "${env:temp}\net4.zip" -DestinationPath "${env:temp}\net4"
+          [IO.Directory]::Delete("v4.0", $True)
+          Move-Item -Force -LiteralPath "${env:temp}\net4\build\.NETFramework\v4.0" -Destination "."
+        working-directory: "C:/Program Files (x86)/Reference Assemblies/Microsoft/Framework/.NETFramework"
+
+      - name: "🔄 Restore NuGet packages"
         run: "nuget restore ${{ matrix.project }}.sln"
         working-directory: "windows/${{ matrix.project }}"
 
-        # yamllint disable rule:indentation rule:line-length
-      - name: "Pre-hooks"
+      - name: "📋 Install project-specific dependencies"
         run: |
-          # SharPersist
+          Write-Host "📦 Installing ${{ matrix.project }} dependencies"
+          if (-Not (Test-Path ".\packages")) {
+            New-Item -ItemType Directory -Path ".\packages"
+          }
+
+          # SharPersist specific packages
           if ('${{ matrix.project }}' -eq 'SharPersist') {
-            Write-Host 'Installing SharPersist dependencies'
-            if (-Not (Test-Path -Path '\packages')) {
-              New-Item -ItemType Directory -Path '.\packages'
-            }
             nuget install Costura.Fody -Version 3.3.3 -Source 'https://api.nuget.org/v3/index.json' -OutputDirectory '.\packages'
             nuget install TaskScheduler -Version 2.8.11 -Source 'https://api.nuget.org/v3/index.json' -OutputDirectory '.\packages'
           }
         working-directory: "windows/${{ matrix.project }}"
-        if: "success() || failure()"
-        # yamllint enable rule:indentation rule:line-length
 
-      - name: "Build the solution"
+      - name: "🏗️ Build solution"
         run: |
-          msbuild /m /t:Build /p:Configuration=Release /p:Platform="Any CPU"
-          if (-not $?) { msbuild /m /t:Build /p:Configuration=Release /p:Platform="x64" }
-          Get-ChildItem -Path . -Recurse -Filter *.exe | Move-Item -Destination . -Force
+          $buildArgs = @('/m', '/t:Build', '/p:Configuration=Release')
+          if ('${{ matrix.platform }}' -ne '') { $buildArgs += '/p:Platform=${{ matrix.platform }}' }
+          msbuild @buildArgs
+          New-Item -ItemType Directory -Path ".\bundle" -Force
+          Get-ChildItem -Path . -Recurse -Filter *.exe | ForEach-Object {
+            Write-Host "📁 Moving $($_.Name) to root directory"
+            Move-Item $_.FullName .\bundle\ -Force
+          }
+          if(Test-Path "..\PowerSharpPack\PowerSharpBinaries\Invoke-${{ matrix.project }}.ps1") {
+            Write-Host "📜 Found PowerShell version"
+            Move-Item "..\PowerSharpPack\PowerSharpBinaries\Invoke-${{ matrix.project }}.ps1" .\bundle\ -Force
+          }
         working-directory: "windows/${{ matrix.project }}"
 
-      - name: "Archive the artifacts"
+      - name: "📤 Upload artifacts"
         uses: "actions/upload-artifact@v4"
         with:
           name: "${{ matrix.project }}"
-          path: "windows/${{ matrix.project }}/*.exe"
+          path: "windows/${{ matrix.project }}/bundle/"
           if-no-files-found: "error"
 
+  # -------------------------------------------------
+  #       PowerShell (PWSH) Scripts
+  # -------------------------------------------------
+
   powershell:
+    name: "📜 PowerShell Scripts"
     runs-on: "ubuntu-latest"
     strategy:
+      fail-fast: false
       matrix:
         project:
           - "Get-ServiceACL"
@@ -75,95 +104,86 @@ jobs:
           - "PowerLurk"
           - "PowerSharpPack"
           - "PowerSploit"
+    
     steps:
-      - name: "Checkout code"
+      - name: "📥 Checkout code"
         uses: "actions/checkout@v4"
         with:
           fetch-depth: 1
           submodules: "recursive"
 
-      - name: "Copy all the PWSH scripts"
+      - name: "📋 Collect PowerShell scripts"
         run: |
-          mkdir -p /tmp/${{ matrix.project }}
-          find . -type f -name '*.ps1' -exec cp {} /tmp/${{ matrix.project }}/ \;
+          echo "📜 Collecting PowerShell scripts for ${{ matrix.project }}"
+          mkdir -p "/tmp/${{ matrix.project }}"
+          find . -type f -name '*.ps1' -exec mv {} "/tmp/${{ matrix.project }}/" \;
         working-directory: "windows/${{ matrix.project }}"
 
-      - name: "Archive the artifacts"
+      - name: "📤 Upload PowerShell artifacts"
         uses: "actions/upload-artifact@v4"
         with:
           name: "${{ matrix.project }}"
           path: "/tmp/${{ matrix.project }}/"
           if-no-files-found: "error"
 
-  windows-bundle:
+  # -------------------------------------------------
+  #       Bundle creation
+  # -------------------------------------------------
+
+  bundle-windows:
+    name: "📦 Create Windows bundle"
     runs-on: "ubuntu-latest"
     needs: ["csharp", "powershell"]
+    
     steps:
-      - name: "Download csharp artifacts"
+      - name: "📥 Download all artifacts"
         uses: "actions/download-artifact@v4"
         with:
           path: "/tmp/bundle/"
           pattern: "*"
           merge-multiple: false
 
-      - name: "Remove the temporary artifacts"
+      - name: "🗑️ Cleanup temporary artifacts"
         uses: "geekyeggo/delete-artifact@v5"
         with:
           name: "*"
 
-      - name: "Extra steps"
-        run: |
-          # Certify
-          echo 'Copying the Certify executable to the bundle directory'
-          cp ./PowerSharpPack/Invoke-Certify.ps1 ./Certify/
-
-          # Rubeus
-          echo 'Copying the Rubeus powershell version to Rubeus directory'
-          cp ./PowerSharpPack/Invoke-Rubeus.ps1 ./Rubeus/
-
-          # Seatbelt
-          echo 'Copying the Seatbelt powershell version to Seatbelt directory'
-          cp ./PowerSharpPack/Invoke-Seatbelt.ps1 ./Seatbelt/
-
-          # SharPersist
-          echo 'Copying the SharPersist powershell version to SharPersist directory'
-          cp ./PowerSharpPack/Invoke-SharPersist.ps1 ./SharPersist/
-
-          # SharpUp
-          echo 'Copying the SharpUp powershell version to SharpUp directory'
-          cp ./PowerSharpPack/Invoke-SharpUp.ps1 ./SharpUp/
-        working-directory: "/tmp/bundle/"
-
-      - name: "Upload the final artifact"
+      - name: "📦 Upload Windows bundle"
         uses: "actions/upload-artifact@v4"
         with:
-          if-no-files-found: "error"
-          name: "hackpack-windows.zip"
+          name: "hackpack-windows"
           path: "/tmp/bundle/"
           compression-level: 9
+          if-no-files-found: "error"
+
+  # -------------------------------------------------
+  #       GitHub release
+  # -------------------------------------------------
 
   release:
+    name: "🚀 Create Release"
     runs-on: "ubuntu-latest"
-    needs: ["windows-bundle"]
+    needs: ["bundle-windows"]
     permissions:
       contents: "write"
+    
     steps:
-      - name: "Checkout code"
+      - name: "📥 Checkout code"
         uses: "actions/checkout@v4"
         with:
           fetch-depth: 1
 
-      - name: "Download the Windows artifact"
+      - name: "📥 Download Windows bundle"
         uses: "actions/download-artifact@v4"
         with:
-          name: "hackpack-windows.zip"
-          path: "/tmp/windows"
+          name: "hackpack-windows"
+          path: "/tmp/hackpack"
 
-      - name: "Zip the artifacts"
-        run: "/usr/bin/zip -r /tmp/hackpack-windows.zip ."
-        working-directory: "/tmp/windows"
+      - name: "🗜️ Zip the artifacts"
+        run: "/usr/bin/zip -r /tmp/hackpack-windows ."
+        working-directory: "/tmp/hackpack"
 
-      - name: "Delete older releases"
+      - name: "🗑️ Cleanup old releases"
         uses: "jay2610/delete-older-releases@1.4.0"
         with:
           keep_latest: 0
@@ -171,7 +191,7 @@ jobs:
         env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
 
-      - name: "Release the artifacts"
+      - name: "🚀 Create GitHub Release"
         uses: "softprops/action-gh-release@v2"
         with:
           name: "🎒 Hackpack!"

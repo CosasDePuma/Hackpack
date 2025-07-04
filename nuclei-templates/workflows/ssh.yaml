@@ -7,8 +7,6 @@ workflows:
   - template: templates/ssh/detect.yaml
     subtemplates:
       - template: templates/ssh/auth-password.yaml
-      - template: templates/ssh/cve-2016-6210.yaml
-      - template: templates/ssh/cve-2018-15473.yaml
       - template: templates/ssh/cve-2023-48795.yaml
       - template: templates/ssh/weak-kex.yaml
       - template: templates/ssh/weak-mac.yaml

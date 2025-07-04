@@ -2,10 +2,6 @@
 	path = windows/Certify
 	url = https://github.com/GhostPack/Certify
 	branch = main
-[submodule "dcsyncer"]
-	path = windows/DCSyncer
-	url = https://github.com/notsoshant/DCSyncer
-	branch = master
 [submodule "mailsniper"]
 	path = windows/MailSniper
 	url = https://github.com/dafthack/MailSniper

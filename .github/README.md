@@ -19,7 +19,6 @@
 | Tool                                                               | Description                                                                                                     |
 | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------- |
 | [Certify](https://github.com/GhostPack/Certify)                    | Active Directory certificate abuse.                                                                             |
-| [DCSyncer](https://github.com/notsoshant/DCSyncer)                 | Perform DCSync operation without [mimikatz](https://github.com/gentilkiwi/mimikatz).                            |
 | [Get-ServiceACL](./windows/Get-ServiceACL/Get-ServiceACL.ps1)      | Retrieve the access control list (ACL) for a service running on a host.                                         |
 | [MailSniper](https://github.com/dafthack/MailSniper)               | Toolset for performing analysis and attacks on mail services.                                                   |
 | [Powecat](https://github.com/besimorhino/powercat)                 | [Netcat](https://en.wikipedia.org/wiki/Netcat)-like written in PowerShell.                                      |
@@ -42,8 +41,6 @@
 | 📄 | SSH | [ssh-auth-password](../nuclei-templates/templates/ssh/auth-password.yaml) | Password-based authentication enabled. |
 | 📄 | SSH | [ssh-weak-kex](../nuclei-templates/templates/ssh/weak-kex.yaml) | Weak key exchange algorithms offered. |
 | 📄 | SSH | [ssh-weak-mac](../nuclei-templates/templates/ssh/weak-mac.yaml) | Weak message authentication code algorithms offered. |
-| 📄 | SSH | [cve-2016-6210](../nuclei-templates/templates/ssh/cve-2016-6210.yaml) | User enumeration in OpenSSH < 7.3. |
-| 📄 | SSH | [cve-2018-15473](../nuclei-templates/templates/ssh/cve-2018-15473.yaml) | User enumeration in OpenSSH < 7.7. |
 | 📄 | SSH | [cve-2023-48795](../nuclei-templates/templates/ssh/cve-2023-48795.yaml) | Terrapin Attack. |
 
 <hr/>
